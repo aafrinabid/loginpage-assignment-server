@@ -25,6 +25,7 @@ const verifyJwt=(req,res,next)=>{
                 req.userId=decoded.id;
                 req.sessionId=decoded.sessionId;
                 req.role=decoded.role
+                req.loginTime=decoded.iat
                console.log(decoded)
                 console.log(req.userId,'all set indeed')
                 next();
@@ -33,10 +34,10 @@ const verifyJwt=(req,res,next)=>{
     }
 
 }
-function diff_minutes(dt2, dt1) 
+function diff_minutes(dt1, dt2) 
  { 
-  console.log(dt1.getTime())
-  var diff =(dt2.getTime() - dt1.getTime()) / 1000;
+  console.log(dt1-dt2)
+  var diff =(dt2 - dt1.getTime()) / 1000;
   diff /= 60;
   console.log(diff)
   return Math.abs(Math.round(diff));
@@ -160,15 +161,18 @@ app.post('/logoutHandler',verifyJwt,async(req,res)=>{
    try{  
     const sessionId=req.sessionId
      const userId=req.userId
-     const logoutDate=new Date(req.body.date)
+     const logoutDate=req.body.date
     //  console.log(logoutDate)
      const data=await pool.query('select * from user_session where session_id=$1',[sessionId])
      if(data.rowCount>0){
-        const loginDate=new Date(data.rows[0].login_time)
+        const loginDate=data.rows[0].login_time
+        const loginTime=new Date(loginDate)
+
         // console.log(loginDate)
-        const sessionTime=diff_minutes(logoutDate,loginDate)
-        console.log(sessionTime)
+        const sessionTime=diff_minutes(loginTime,logoutDate)
+        console.log(sessionTime,'say whattttt')
         const updateTable=await pool.query('UPDATE user_session set session_time=$1 where session_id=$2',[sessionTime,sessionId])
+        return res.json({updated:true})
 
      }
     }catch(e){
