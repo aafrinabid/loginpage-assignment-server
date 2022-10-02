@@ -195,7 +195,7 @@ if(req.role===0){
     }
 }
 if(req.role===1){
-    const data =await pool.query('select users.email,users.username,users.mobile_number,user_session.* from user_session join users on user_session.user_id=users.id')
+    const data =await pool.query('select users.email,users.username,users.mobile_number,user_session.* from user_session join users on user_session.user_id=users.id where user_session.user_id!$1',[req.userId])
     if(data.rowCount>0){
 
         const details=data.rows
