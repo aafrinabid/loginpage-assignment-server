@@ -159,7 +159,8 @@ app.post('/registeruser',async(req,res)=>{
 
 app.post('/logoutHandler',verifyJwt,async(req,res)=>{
    try{  
-    const sessionId=req.sessionId
+  if(req.role===0){
+      const sessionId=req.sessionId
      const userId=req.userId
      const logoutDate=req.body.date
     //  console.log(logoutDate)
@@ -173,11 +174,38 @@ app.post('/logoutHandler',verifyJwt,async(req,res)=>{
         console.log(sessionTime,'say whattttt')
         const updateTable=await pool.query('UPDATE user_session set session_time=$1 where session_id=$2',[sessionTime,sessionId])
         return res.json({updated:true})
-
+}
+     }else{
+        return res.json({update:true})
      }
     }catch(e){
         console.log(e)
     }
+})
+
+app.get('/getDetails',verifyJwt,async(req,res)=>{
+try{
+const userId=req.userId
+if(req.role===0){
+
+    const data=await pool.query('select users.username,user_session.* from user_session join users on user_session.user_id=users.id where user_session.user_id=$1',[userId])
+    if(data.rowCount>0){
+        const details=data.rows
+        return res.json({details,username:details[0].username})
+    }
+}
+if(req.role===1){
+    const data =await pool.query('select users.email,users.username,users.mobile_number,user_session.* from user_session join users on user_session.user_id=users.id')
+    if(data.rowCount>0){
+
+        const details=data.rows
+        return res.json({details,username:details[0].username})
+    }
+
+}
+}catch(e){
+console.log(e)
+}
 })
 
 
